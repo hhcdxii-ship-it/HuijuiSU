@@ -41,6 +41,8 @@ jobs:
         EXPECTED_HASH2: ${{ inputs.expected_hash2 }}
       run: |
         git config --global --add safe.directory '*'
+        mkdir -p /home/runner/work/HuijuiSU
+        ln -sfn /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
         cd kernel
 
         echo "=== Building kernelsu.ko for KMI: ${{ inputs.kmi }} ==="
