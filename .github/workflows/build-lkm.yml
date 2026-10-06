@@ -4,25 +4,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-lkm:
+    name: Build kernelsu.ko for android16-6.12
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ylarod/ddk-min:android16-6.12-20260828
+      options: --privileged
+
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+    - name: Checkout source code
+      uses: actions/checkout@v6
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm lld make bc flex bison libssl-dev
+    - name: Build kernelsu.ko
+      run: |
+        git config --global --add safe.directory '*'
+        sudo mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
+        sudo mount --bind /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
 
-      - name: Build LKM
-        run: |
-          cd kernel
-          make ARCH=arm64 LLVM=1 CONFIG_KSU=m CONFIG_KSU_MANAGER=y
+        echo "=== Step 1: 检查镜像里的 /opt/ddk ==="
+        ls -la /opt/ddk/ 2>&1 || echo "ls /opt/ddk 失败"
+        echo "=== Step 2: 检查 /opt/ddk/src ==="
+        ls -la /opt/ddk/src/ 2>&1 || echo "ls /opt/ddk/src 失败"
+        echo "=== Step 3: 检查目标 KDIR 是否存在 ==="
+        ls -la /opt/ddk/src/android16-6.12/ 2>&1 || echo "目标 KDIR 不存在"
 
-      - name: Upload kernelsu.ko
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernelsu-lkm
-          path: kernel/**/*.ko
-          if-no-files-found: warn
+        cd kernel
+        echo "=== Step 4: 开始编译 ==="
+        CONFIG_KSU=m CC=clang make KDIR=/opt/ddk/src/android16-6.12 2>&1 | head -200
+
+        echo "=== Step 5: 检查产物 ==="
+        ls -la kernelsu.ko 2>&1 || echo "kernelsu.ko 未生成"
