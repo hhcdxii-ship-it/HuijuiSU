@@ -39,6 +39,8 @@ jobs:
       env:
         EXPECTED_SIZE2: ${{ inputs.expected_size2 }}
         EXPECTED_HASH2: ${{ inputs.expected_hash2 }}
+        KDIR: /opt/ddk/src/${{ inputs.kmi }}
+        KBUILD_SRC: /opt/ddk/src/${{ inputs.kmi }}
       run: |
         git config --global --add safe.directory '*'
         sudo mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
