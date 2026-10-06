@@ -18,8 +18,10 @@ jobs:
     - name: Build kernelsu.ko
       run: |
         git config --global --add safe.directory '*'
-        sudo mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
-        sudo mount --bind /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
+
+        # 容器本身是 root 权限，不需要 sudo
+        mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
+        mount --bind /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
 
         echo "=== Step 1: 检查镜像里的 /opt/ddk ==="
         ls -la /opt/ddk/ 2>&1 || echo "ls /opt/ddk 失败"
