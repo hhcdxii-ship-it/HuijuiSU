@@ -1,0 +1,28 @@
+name: Build SukiSU LKM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm lld make bc flex bison libssl-dev
+
+      - name: Build LKM
+        run: |
+          cd kernel
+          make ARCH=arm64 LLVM=1 CONFIG_KSU=m CONFIG_KSU_MANAGER=y
+
+      - name: Upload kernelsu.ko
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernelsu-lkm
+          path: kernel/**/*.ko
+          if-no-files-found: warn
