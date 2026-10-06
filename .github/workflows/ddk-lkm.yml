@@ -39,14 +39,13 @@ jobs:
       env:
         EXPECTED_SIZE2: ${{ inputs.expected_size2 }}
         EXPECTED_HASH2: ${{ inputs.expected_hash2 }}
-        KDIR: /opt/ddk/src/${{ inputs.kmi }}
-        KBUILD_SRC: /opt/ddk/src/${{ inputs.kmi }}
       run: |
         git config --global --add safe.directory '*'
         sudo mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
         sudo mount --bind /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
         cd kernel
-
+        KMI_DIR=$(find /opt/ddk -maxdepth 4 -type d -name "${{ inputs.kmi }}" 2>/dev/null | head -1)
+        echo "=== Detected KMI_DIR: $KMI_DIR ==="
         echo "=== Building kernelsu.ko for KMI: ${{ inputs.kmi }} ==="
 
         EXTRA_ARGS=""
