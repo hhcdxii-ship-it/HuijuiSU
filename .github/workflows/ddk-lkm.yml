@@ -44,8 +44,10 @@ jobs:
         sudo mkdir -p /home/runner/work/HuijuiSU/HuijuiSU
         sudo mount --bind /github/workspace /home/runner/work/HuijuiSU/HuijuiSU
         cd kernel
-        KMI_DIR=$(find /opt/ddk -maxdepth 4 -type d -name "${{ inputs.kmi }}" 2>/dev/null | head -1)
-        echo "=== Detected KMI_DIR: $KMI_DIR ==="
+        echo "=== 检查 /opt/ddk 内容 ==="
+        ls -la /opt/ddk/ || true
+        ls -la /opt/ddk/src/ || true
+        echo "=== Using KDIR: /opt/ddk/src/${{ inputs.kmi }} ==="
         echo "=== Building kernelsu.ko for KMI: ${{ inputs.kmi }} ==="
 
         EXTRA_ARGS=""
@@ -60,7 +62,7 @@ jobs:
         if [ -n "$EXPECTED_SIZE2" ]; then
           EXTRA_ARGS="KSU_EXPECTED_SIZE2=$EXPECTED_SIZE2 KSU_EXPECTED_HASH2=$EXPECTED_HASH2"
         fi
-        CONFIG_KSU=m CC=clang make $EXTRA_ARGS
+        CONFIG_KSU=m CC=clang make KDIR="/opt/ddk/src/${{ inputs.kmi }}" $EXTRA_ARGS
         
         echo "=== Build completed ==="
 
@@ -102,9 +104,6 @@ jobs:
         pushd /opt/ddk/src/$kmi
         export KDIR=/opt/ddk/kdir-x64/$kmi
 
-        # ddk-min images contain the source tarball, whose modpost patch is
-        # not applied to the fresh x86 kdir.  Keep the patch idempotent so
-        # this also works when the image already contains one or more fixes.
         MODPOST=scripts/mod/modpost.c
         sed -i -E 's/^([[:space:]]*)check_exports\(mod\);/\1\/\/ check_exports(mod);/' "$MODPOST"
         sed -i -E 's/^([[:space:]]*)s->module = exp->module;/\1\/\/ s->module = exp->module;/' "$MODPOST"
@@ -117,7 +116,6 @@ jobs:
             scripts/config --file $KDIR/.config -e CONFIG_CFI_ICALL_NORMALIZE_INTEGERS
         fi
         make O=$KDIR modules_prepare
-        # Generate SELinux headers through Kbuild in this x86 output tree.
         make O=$KDIR security/selinux/built-in.a
         popd
         
@@ -146,11 +144,9 @@ jobs:
         
         echo "=== Build completed ==="
 
-        # Create output directory in GitHub workspace
         OUT_DIR=/github/workspace/out/x86_64
         mkdir -p $OUT_DIR
 
-        # Copy with KMI-specific naming
         OUTPUT_NAME="${{ inputs.kmi }}_kernelsu.ko"
         cp kernelsu.ko "$OUT_DIR/$OUTPUT_NAME"
         
